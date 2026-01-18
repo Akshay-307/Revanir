@@ -14,16 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string
+          created_at: string
+          default_units: number | null
+          id: string
+          is_regular: boolean
+          name: string
+          phone: string
+          route_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          default_units?: number | null
+          id?: string
+          is_regular?: boolean
+          name: string
+          phone: string
+          route_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          default_units?: number | null
+          id?: string
+          is_regular?: boolean
+          name?: string
+          phone?: string
+          route_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_bills: {
+        Row: {
+          billing_month: string
+          created_at: string
+          customer_id: string
+          id: string
+          is_settled: boolean
+          settled_at: string | null
+          settled_by: string | null
+          total_units: number
+        }
+        Insert: {
+          billing_month: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_settled?: boolean
+          settled_at?: string | null
+          settled_by?: string | null
+          total_units?: number
+        }
+        Update: {
+          billing_month?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_settled?: boolean
+          settled_at?: string | null
+          settled_by?: string | null
+          total_units?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          billing_month: string | null
+          created_at: string
+          customer_id: string
+          delivered_at: string
+          id: string
+          is_paid: boolean
+          logged_by: string | null
+          notes: string | null
+          units: number
+        }
+        Insert: {
+          billing_month?: string | null
+          created_at?: string
+          customer_id: string
+          delivered_at?: string
+          id?: string
+          is_paid?: boolean
+          logged_by?: string | null
+          notes?: string | null
+          units?: number
+        }
+        Update: {
+          billing_month?: string | null
+          created_at?: string
+          customer_id?: string
+          delivered_at?: string
+          id?: string
+          is_paid?: boolean
+          logged_by?: string | null
+          notes?: string | null
+          units?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          pin_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          pin_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          pin_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      routes: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_billing_month: { Args: never; Returns: string }
+      get_customer_monthly_total: {
+        Args: { _billing_month?: string; _customer_id: string }
+        Returns: number
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_authenticated_user: { Args: never; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +364,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "staff"],
+    },
   },
 } as const
