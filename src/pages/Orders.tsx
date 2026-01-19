@@ -21,7 +21,7 @@ export default function Orders() {
   };
 
   const totalUnits = orders.reduce((sum, o) => sum + o.units, 0);
-  const paidUnits = orders.filter(o => o.isPaid).reduce((sum, o) => sum + o.units, 0);
+  const paidUnits = orders.filter(o => o.is_paid).reduce((sum, o) => sum + o.units, 0);
 
   return (
     <div className="min-h-screen bg-background pb-20">

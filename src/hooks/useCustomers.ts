@@ -1,28 +1,77 @@
-import { useLocalStorage } from './useLocalStorage';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Customer } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useCustomers() {
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('water-delivery-customers', []);
+  const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
 
-  const addCustomer = (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-    const newCustomer: Customer = {
-      ...customer,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setCustomers(prev => [...prev, newCustomer]);
-    return newCustomer;
-  };
+  const { data: customers = [], isLoading } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const updateCustomer = (id: string, updates: Partial<Customer>) => {
-    setCustomers(prev => 
-      prev.map(c => c.id === id ? { ...c, ...updates } : c)
-    );
-  };
+      if (error) throw error;
+      return data as Customer[];
+    },
+  });
 
-  const deleteCustomer = (id: string) => {
-    setCustomers(prev => prev.filter(c => c.id !== id));
-  };
+  const addCustomerMutation = useMutation({
+    mutationFn: async (customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
+      if (!isAdmin) throw new Error('Only admins can add customers');
+
+      const { data, error } = await supabase
+        .from('customers')
+        .insert(customer)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+
+  const updateCustomerMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Customer> }) => {
+      if (!isAdmin) throw new Error('Only admins can update customers');
+
+      const { data, error } = await supabase
+        .from('customers')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+
+  const deleteCustomerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!isAdmin) throw new Error('Only admins can delete customers');
+
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
 
   const searchCustomers = (query: string) => {
     if (!query.trim()) return customers;
@@ -36,9 +85,10 @@ export function useCustomers() {
 
   return {
     customers,
-    addCustomer,
-    updateCustomer,
-    deleteCustomer,
+    isLoading,
+    addCustomer: addCustomerMutation.mutateAsync,
+    updateCustomer: updateCustomerMutation.mutateAsync,
+    deleteCustomer: deleteCustomerMutation.mutateAsync,
     searchCustomers,
   };
 }

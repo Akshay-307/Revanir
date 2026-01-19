@@ -11,11 +11,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header 
-        title="AquaTrack" 
-        subtitle={format(new Date(), 'EEEE, MMMM d')} 
+      <Header
+        title="Revanir"
+        subtitle={format(new Date(), 'EEEE, MMMM d')}
       />
-      
+
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Daily Summary */}
         <section>
@@ -23,7 +23,7 @@ export default function Dashboard() {
             <TrendingUp className="w-5 h-5 text-primary" />
             Today's Summary
           </h2>
-          
+
           <div className="grid grid-cols-2 gap-3">
             <StatCard
               label="Total Units"
@@ -57,7 +57,7 @@ export default function Dashboard() {
           <h2 className="text-lg font-semibold text-foreground mb-4">
             Today's Deliveries
           </h2>
-          
+
           {todaysOrders.length === 0 ? (
             <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
               <Droplets className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />

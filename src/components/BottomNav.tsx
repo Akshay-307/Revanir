@@ -1,17 +1,23 @@
-import { Home, Users, Plus, ClipboardList } from 'lucide-react';
+import { Home, Users, Plus, ClipboardList, Shield } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { path: '/', icon: Home, label: 'Dashboard' },
-  { path: '/customers', icon: Users, label: 'Customers' },
-  { path: '/new-order', icon: Plus, label: 'New Order' },
-  { path: '/orders', icon: ClipboardList, label: 'Orders' },
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+
+  const baseNavItems = [
+    { path: '/', icon: Home, label: 'Dashboard' },
+    { path: '/customers', icon: Users, label: 'Customers' },
+    { path: '/new-order', icon: Plus, label: 'New Order' },
+    { path: '/orders', icon: ClipboardList, label: 'Orders' },
+  ];
+
+  const navItems = isAdmin
+    ? [...baseNavItems, { path: '/admin', icon: Shield, label: 'Admin' }]
+    : baseNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-inset z-50">

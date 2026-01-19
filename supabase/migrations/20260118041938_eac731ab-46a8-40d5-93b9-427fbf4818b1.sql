@@ -134,6 +134,10 @@ CREATE POLICY "Users can view their own role"
 ON public.user_roles FOR SELECT
 USING (auth.uid() = user_id);
 
+CREATE POLICY "Users can insert their own role"
+ON public.user_roles FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
 CREATE POLICY "Admins can manage roles"
 ON public.user_roles FOR ALL
 USING (public.is_admin());
@@ -146,6 +150,10 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Admins can view all profiles"
 ON public.profiles FOR SELECT
 USING (public.is_admin());
+
+CREATE POLICY "Users can insert their own profile"
+ON public.profiles FOR INSERT
+WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own profile"
 ON public.profiles FOR UPDATE

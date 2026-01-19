@@ -3,17 +3,27 @@ export interface Customer {
   name: string;
   phone: string;
   address: string;
-  createdAt: string;
+  route_id: string | null;
+  is_regular: boolean;
+  default_units: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Order {
   id: string;
-  customerId: string;
-  customerName: string;
+  customer_id: string;
   units: number;
-  isPaid: boolean;
-  date: string;
-  createdAt: string;
+  is_paid: boolean;
+  product_type: 'bottle' | 'jug';
+  order_type: 'regular' | 'bulk';
+  price: number;
+  billing_month: string | null;
+  delivered_at: string;
+  logged_by: string | null;
+  notes: string | null;
+  created_at: string;
+  customer?: Customer; // For joined data
 }
 
 export interface DailySummary {

@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      "boston-unimpertinent-ceaselessly.ngrok-free.dev"
+    ],
     hmr: {
       overlay: false,
     },

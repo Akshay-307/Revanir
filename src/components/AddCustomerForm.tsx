@@ -29,7 +29,7 @@ export function AddCustomerForm({ onSuccess }: AddCustomerFormProps) {
     setIsSubmitting(true);
     
     try {
-      addCustomer({
+      await addCustomer({
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
