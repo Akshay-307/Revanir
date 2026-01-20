@@ -47,28 +47,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfileAndRole = async (userId: string, email?: string) => {
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      // Create a timeout promise that rejects after 5 seconds
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timed out')), 5000)
+      );
 
-      if (profileError || !profile) {
-        console.error('Error fetching profile:', profileError);
-        return null;
-      }
+      // Wrap the actual fetch operation
+      const fetchPromise = (async () => {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
 
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+        if (profileError || !profile) {
+          console.error('Error fetching profile:', profileError);
+          return null;
+        }
 
-      return {
-        id: userId,
-        profile: { ...profile, email: email || null },
-        role: roleData?.role || null,
-      } as AuthUser;
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single();
+
+        return {
+          id: userId,
+          profile: { ...profile, email: email || null },
+          role: roleData?.role || null,
+        } as AuthUser;
+      })();
+
+      // Race against the timeout
+      return await Promise.race([fetchPromise, timeoutPromise]) as AuthUser | null;
     } catch (error) {
       console.error('Error in fetchProfileAndRole:', error);
       return null;
@@ -127,13 +138,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, pass: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: pass,
-      });
+      // 10s timeout for login
+      const timeoutPromise = new Promise<{ error: any }>((resolve) =>
+        setTimeout(() => resolve({ error: { message: 'Login timed out. Please check your connection.' } }), 10000)
+      );
 
-      if (error) return { error };
-      return { error: null };
+      const loginPromise = (async () => {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password: pass,
+        });
+        return { error };
+      })();
+
+      return await Promise.race([loginPromise, timeoutPromise]);
     } catch (error) {
       return { error };
     }
