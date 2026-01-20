@@ -5,15 +5,18 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, MapPin, Phone, RotateCcw, Calendar } from 'lucide-react';
-import { format, isAfter, isToday } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Clock, MapPin, Phone, RotateCcw } from 'lucide-react';
+import { isAfter, isToday } from 'date-fns';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/utils/dateUtils';
+import { TransliteratedText } from '@/components/TransliteratedText';
 
 export default function Reminders() {
     const { orders } = useOrders();
     const { customers, updateContainerCount } = useCustomers();
     const [activeTab, setActiveTab] = useState('deliveries');
+    const { t } = useTranslation();
 
     // Filter Upcoming Deliveries (Scheduled Events)
     const upcomingDeliveries = orders
@@ -32,28 +35,28 @@ export default function Reminders() {
     const handleReturn = async (customerId: string, currentCount: number) => {
         try {
             await updateContainerCount(customerId, -1);
-            toast.success('Container returned');
+            toast.success(t('reminders.container_returned'));
         } catch (e) {
-            toast.error('Failed to update container count');
+            toast.error(t('reminders.failed_update'));
         }
     };
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <Header title="Reminders" subtitle="Tasks and follow-ups" />
+            <Header title={t('reminders.title')} subtitle={t('reminders.subtitle')} />
 
             <main className="px-4 py-6 max-w-md mx-auto">
                 <Tabs defaultValue="deliveries" className="w-full" onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-2 mb-6">
-                        <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
-                        <TabsTrigger value="returns">Returns</TabsTrigger>
+                        <TabsTrigger value="deliveries">{t('reminders.tabs_deliveries')}</TabsTrigger>
+                        <TabsTrigger value="returns">{t('reminders.tabs_returns')}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="deliveries" className="space-y-4">
                         {upcomingDeliveries.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p>No upcoming scheduled deliveries</p>
+                                <p>{t('reminders.no_upcoming')}</p>
                             </div>
                         ) : (
                             upcomingDeliveries.map(order => (
@@ -61,15 +64,17 @@ export default function Reminders() {
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="font-semibold text-purple-900">
-                                                {format(new Date(order.delivered_at), 'MMM d, h:mm a')}
+                                                {formatDate(order.delivered_at, 'MMM d, h:mm a')}
                                             </div>
                                             <div className="text-sm font-medium">
-                                                {order.units} {order.product_type === 'bottle' ? 'Bottles' : 'Jugs'}
+                                                {order.units} {order.product_type === 'bottle' ? t('cards.bottles') : t('cards.jugs')}
                                             </div>
                                         </div>
                                         <div className="text-sm text-muted-foreground space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-medium text-foreground">{order.customer?.name}</span>
+                                                <span className="font-medium text-foreground">
+                                                    <TransliteratedText text={order.customer?.name} />
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Phone className="w-3 h-3" />
@@ -77,7 +82,7 @@ export default function Reminders() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="w-3 h-3" />
-                                                {order.customer?.address}
+                                                <TransliteratedText text={order.customer?.address} />
                                             </div>
                                         </div>
                                     </CardContent>
@@ -90,21 +95,23 @@ export default function Reminders() {
                         {pendingReturns.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 <RotateCcw className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p>No pending container returns</p>
+                                <p>{t('reminders.no_returns')}</p>
                             </div>
                         ) : (
                             pendingReturns.map(customer => (
                                 <Card key={customer.id} className="border-l-4 border-l-amber-400">
                                     <CardContent className="p-4 flex items-center justify-between">
                                         <div>
-                                            <div className="font-semibold">{customer.name}</div>
+                                            <div className="font-semibold">
+                                                <TransliteratedText text={customer.name} />
+                                            </div>
                                             <div className="text-sm text-muted-foreground">{customer.phone}</div>
                                             <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-                                                {customer.containers_held} Pending
+                                                {t(customer.containers_held === 1 ? 'cards.container_pending' : 'cards.containers_pending', { count: customer.containers_held })}
                                             </div>
                                         </div>
                                         <Button size="sm" variant="outline" onClick={() => handleReturn(customer.id, customer.containers_held)}>
-                                            Return 1
+                                            {t('cards.return_1')}
                                         </Button>
                                     </CardContent>
                                 </Card>

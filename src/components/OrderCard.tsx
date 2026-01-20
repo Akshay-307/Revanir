@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/utils/dateUtils';
+import { useTransliteration } from '@/utils/transliterate';
 
 interface OrderCardProps {
   order: Order;
@@ -12,7 +15,9 @@ interface OrderCardProps {
 
 export function OrderCard({ order, onTogglePayment }: OrderCardProps) {
   const { isAdmin } = useAuth();
-  const customerName = order.customer?.name || 'Unknown Customer';
+  const { t } = useTranslation();
+  const rawCustomerName = order.customer?.name || t('cards.unknown_customer');
+  const customerName = useTransliteration(rawCustomerName);
   const isBulk = order.order_type === 'bulk';
   const canEdit = !isBulk || isAdmin;
 
@@ -35,13 +40,13 @@ export function OrderCard({ order, onTogglePayment }: OrderCardProps) {
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground truncate flex items-center gap-2">
               {customerName}
-              {isBulk && <span className="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">Bulk</span>}
+              {isBulk && <span className="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full">{t('cards.bulk')}</span>}
             </h3>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Droplets className="w-4 h-4 text-primary" />
                 <span className="font-medium">
-                  {order.units} {order.product_type === 'jug' ? 'Jugs' : 'Bottles'}
+                  {order.units} {order.product_type === 'jug' ? t('cards.jugs') : t('cards.bottles')}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -50,7 +55,7 @@ export function OrderCard({ order, onTogglePayment }: OrderCardProps) {
               </div>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
-                <span>{format(new Date(order.delivered_at), 'h:mm a')}</span>
+                <span>{formatDate(order.delivered_at, 'h:mm a')}</span>
               </div>
             </div>
           </div>
@@ -66,7 +71,7 @@ export function OrderCard({ order, onTogglePayment }: OrderCardProps) {
             !canEdit && "opacity-50 cursor-not-allowed"
           )}
         >
-          {order.is_paid ? 'Paid' : 'Pending'}
+          {order.is_paid ? t('cards.paid') : t('cards.pending')}
         </Button>
       </div>
     </div>

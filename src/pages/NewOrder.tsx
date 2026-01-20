@@ -12,11 +12,13 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useTranslation } from 'react-i18next';
 
 export default function NewOrder() {
   const { customers, searchCustomers, updateContainerCount } = useCustomers();
   const { addOrder } = useOrders();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -46,17 +48,17 @@ export default function NewOrder() {
 
   const handleSubmit = async () => {
     if (!selectedCustomer) {
-      toast.error('Please select a customer');
+      toast.error(t('new_order.error_select_customer'));
       return;
     }
 
     if (units < 1) {
-      toast.error('Units must be at least 1');
+      toast.error(t('new_order.error_units'));
       return;
     }
 
     if (isScheduled && !eventDate) {
-      toast.error('Please select a date and time for the event');
+      toast.error(t('new_order.error_date'));
       return;
     }
 
@@ -86,7 +88,7 @@ export default function NewOrder() {
         toast.info('Container tracked');
       }
 
-      toast.success(`Order logged for ${selectedCustomer.name}!`);
+      toast.success(t('new_order.success_message', { name: selectedCustomer.name }));
 
       // Reset form
       setSelectedCustomer(null);
@@ -107,13 +109,13 @@ export default function NewOrder() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header title="New Delivery" subtitle="Log a water delivery" />
+      <Header title={t('new_order.title')} subtitle={t('new_order.subtitle')} />
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Customer Selection */}
         <section>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Select Customer
+            {t('new_order.select_customer')}
           </h2>
 
           {selectedCustomer ? (
@@ -124,7 +126,7 @@ export default function NewOrder() {
                 className="w-full"
                 onClick={() => setSelectedCustomer(null)}
               >
-                Change Customer
+                {t('new_order.change_customer')}
               </Button>
             </div>
           ) : (
@@ -133,7 +135,7 @@ export default function NewOrder() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search customers..."
+                  placeholder={t('new_order.search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12"
@@ -153,7 +155,7 @@ export default function NewOrder() {
                 ))}
                 {customers.length === 0 && (
                   <p className="text-center py-8 text-muted-foreground text-sm">
-                    No customers yet. Add one from the Customers tab.
+                    {t('new_order.no_customers_found')}
                   </p>
                 )}
               </div>
@@ -166,7 +168,7 @@ export default function NewOrder() {
           {/* Product Type */}
           <section>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Product Type
+              {t('new_order.product_type')}
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -180,8 +182,8 @@ export default function NewOrder() {
               >
                 <Droplets className="w-8 h-8" />
                 <div className="text-center">
-                  <span className="block font-semibold">Bottle</span>
-                  <span className="text-xs opacity-75">₹20 / unit</span>
+                  <span className="block font-semibold">{t('new_order.bottle')}</span>
+                  <span className="text-xs opacity-75">{t('new_order.bottle_price')}</span>
                 </div>
               </button>
               <button
@@ -195,8 +197,8 @@ export default function NewOrder() {
               >
                 <Package className="w-8 h-8" />
                 <div className="text-center">
-                  <span className="block font-semibold">Jug (Cold)</span>
-                  <span className="text-xs opacity-75">₹30 / unit</span>
+                  <span className="block font-semibold">{t('new_order.jug')}</span>
+                  <span className="text-xs opacity-75">{t('new_order.jug_price')}</span>
                 </div>
               </button>
             </div>
@@ -207,10 +209,10 @@ export default function NewOrder() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Order Type
+                  {t('new_order.order_type')}
                 </h2>
                 <Button variant="link" size="sm" className="h-auto p-0 text-purple-600" onClick={() => window.location.href = '/reminders'}>
-                  View Schedule
+                  {t('new_order.view_schedule')}
                 </Button>
               </div>
               <div className="flex bg-secondary p-1 rounded-xl mb-4">
@@ -226,7 +228,7 @@ export default function NewOrder() {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Regular (Monthly)
+                  {t('new_order.regular_monthly')}
                 </button>
                 <button
                   onClick={() => setOrderType('bulk')}
@@ -237,7 +239,7 @@ export default function NewOrder() {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Special (One-time/Bulk)
+                  {t('new_order.special_onetime')}
                 </button>
               </div>
 
@@ -246,7 +248,7 @@ export default function NewOrder() {
                 <div className="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100 space-y-4 mb-4">
                   <div className="flex items-center justify-between">
                     <label htmlFor="is-scheduled" className="font-medium text-purple-900">
-                      Schedule for later?
+                      {t('new_order.schedule_later')}
                     </label>
                     <div className="flex items-center gap-2">
                       <input
@@ -261,7 +263,7 @@ export default function NewOrder() {
 
                   {isScheduled && (
                     <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                      <Label htmlFor="event-date" className="text-purple-800">Date & Time</Label>
+                      <Label htmlFor="event-date" className="text-purple-800">{t('new_order.date_time')}</Label>
                       <Input
                         id="event-date"
                         type="datetime-local"
@@ -281,11 +283,11 @@ export default function NewOrder() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Quantity & Price
+              {t('new_order.quantity_price')}
             </h2>
             <div className="flex items-center gap-1 text-primary font-bold">
               <Banknote className="w-4 h-4" />
-              <span>Total: ₹{totalPrice}</span>
+              <span>{t('new_order.total')}: ₹{totalPrice}</span>
             </div>
           </div>
 
@@ -301,7 +303,7 @@ export default function NewOrder() {
                 />
               </div>
               <p className="text-xs text-center text-muted-foreground mt-2 uppercase tracking-wide">
-                {productType === 'bottle' ? 'Bottles' : 'Jugs'}
+                {productType === 'bottle' ? t('cards.bottles') : t('cards.jugs')}
               </p>
             </div>
           </div>
@@ -310,7 +312,7 @@ export default function NewOrder() {
         {/* Payment Status */}
         <section>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Payment Status
+            {t('new_order.payment_status')}
           </h2>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -323,7 +325,7 @@ export default function NewOrder() {
               )}
             >
               {!isPaid && <Check className="w-5 h-5" />}
-              Pending
+              {t('new_order.pending')}
             </button>
             <button
               onClick={() => setIsPaid(true)}
@@ -335,12 +337,12 @@ export default function NewOrder() {
               )}
             >
               {isPaid && <Check className="w-5 h-5" />}
-              Paid
+              {t('new_order.paid')}
             </button>
           </div>
           {orderType === 'regular' && (
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Regular customers are usually billed monthly.
+              {t('new_order.regular_billed_monthly')}
             </p>
           )}
         </section>
@@ -358,11 +360,11 @@ export default function NewOrder() {
                   onChange={(e) => setUseCompanyContainer(e.target.checked)}
                 />
                 <label htmlFor="use-container" className="font-medium text-amber-900">
-                  Uses Company Container?
+                  {t('new_order.uses_company_container')}
                 </label>
               </div>
               <p className="text-xs text-amber-700 ml-7">
-                Checking this will mark a container as "Pending Return" for this customer.
+                {t('new_order.container_pending_return')}
               </p>
             </section>
           )
@@ -376,11 +378,11 @@ export default function NewOrder() {
           disabled={!selectedCustomer || isSubmitting}
         >
           {isSubmitting ? (
-            'Logging...'
+            t('new_order.logging')
           ) : (
             <>
               <Check className="w-5 h-5 mr-2" />
-              Log {orderType === 'bulk' ? 'Bulk Order' : 'Delivery'}
+              {orderType === 'bulk' ? t('new_order.log_bulk_order') : t('new_order.log_delivery')}
             </>
           )}
         </Button>

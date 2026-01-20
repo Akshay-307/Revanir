@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { OrderCard } from '@/components/OrderCard';
 import { useOrders } from '@/hooks/useOrders';
 import { format, addDays, subDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/utils/dateUtils';
 
 export default function Orders() {
   const { getOrdersByDate, togglePaymentStatus } = useOrders();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { t, i18n } = useTranslation();
 
   const orders = getOrdersByDate(selectedDate.toISOString());
   const isToday = selectedDate.toDateString() === new Date().toDateString();
@@ -25,7 +28,7 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header title="Order History" subtitle="View past deliveries" />
+      <Header title={t('orders.title')} subtitle={t('orders.subtitle')} />
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Date Navigation */}
@@ -39,10 +42,10 @@ export default function Orders() {
           </Button>
           <div className="text-center">
             <p className="font-semibold text-foreground">
-              {isToday ? 'Today' : format(selectedDate, 'EEEE')}
+              {isToday ? t('orders.today') : formatDate(selectedDate, 'EEEE')}
             </p>
             <p className="text-sm text-muted-foreground">
-              {format(selectedDate, 'MMMM d, yyyy')}
+              {formatDate(selectedDate, 'MMMM d, yyyy')}
             </p>
           </div>
           <Button
@@ -60,17 +63,17 @@ export default function Orders() {
           <div className="flex justify-between items-center p-4 bg-secondary rounded-2xl">
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{orders.length}</p>
-              <p className="text-xs text-muted-foreground">Deliveries</p>
+              <p className="text-xs text-muted-foreground">{t('orders.deliveries')}</p>
             </div>
             <div className="h-10 w-px bg-border" />
             <div className="text-center">
               <p className="text-2xl font-bold text-primary">{totalUnits}</p>
-              <p className="text-xs text-muted-foreground">Total Units</p>
+              <p className="text-xs text-muted-foreground">{t('orders.total_units')}</p>
             </div>
             <div className="h-10 w-px bg-border" />
             <div className="text-center">
               <p className="text-2xl font-bold text-success">{paidUnits}</p>
-              <p className="text-xs text-muted-foreground">Paid Units</p>
+              <p className="text-xs text-muted-foreground">{t('orders.paid_units')}</p>
             </div>
           </div>
         )}
@@ -79,9 +82,9 @@ export default function Orders() {
         {orders.length === 0 ? (
           <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
             <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No orders</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">{t('orders.no_orders')}</h3>
             <p className="text-muted-foreground text-sm">
-              No deliveries recorded for this date
+              {t('orders.no_orders_date')}
             </p>
           </div>
         ) : (

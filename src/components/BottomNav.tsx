@@ -2,21 +2,23 @@ import { Home, Users, Plus, ClipboardList, Shield } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   const baseNavItems = [
-    { path: '/', icon: Home, label: 'Dashboard' },
-    { path: '/customers', icon: Users, label: 'Customers' },
-    { path: '/new-order', icon: Plus, label: 'New Order' },
-    { path: '/orders', icon: ClipboardList, label: 'Orders' },
+    { path: '/', icon: Home, label: t('nav.dashboard') },
+    { path: '/customers', icon: Users, label: t('nav.customers') },
+    { path: '/new-order', icon: Plus, label: t('nav.new_order') },
+    { path: '/orders', icon: ClipboardList, label: t('nav.orders') },
   ];
 
   const navItems = isAdmin
-    ? [...baseNavItems, { path: '/admin', icon: Shield, label: 'Admin' }]
+    ? [...baseNavItems, { path: '/admin', icon: Shield, label: t('nav.admin') }]
     : baseNavItems;
 
   return (
@@ -30,8 +32,8 @@ export function BottomNav() {
               onClick={() => navigate(path)}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 min-w-[64px]",
-                isActive 
-                  ? "text-primary bg-primary/10" 
+                isActive
+                  ? "text-primary bg-primary/10"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >

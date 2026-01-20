@@ -2,6 +2,8 @@ import { Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   title: string;
@@ -11,6 +13,7 @@ interface HeaderProps {
 export function Header({ title, subtitle }: HeaderProps) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <header className="px-6 py-6 flex justify-between items-center bg-background/50 backdrop-blur-lg sticky top-0 z-50">
@@ -23,6 +26,7 @@ export function Header({ title, subtitle }: HeaderProps) {
         )}
       </div>
       <div className="flex items-center gap-2">
+        <LanguageSwitcher />
         <Button variant="ghost" size="icon" onClick={() => navigate('/reminders')} className="relative">
           <Bell className="w-5 h-5 text-muted-foreground" />
         </Button>
@@ -30,7 +34,7 @@ export function Header({ title, subtitle }: HeaderProps) {
         {user && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden sm:inline-block">{user.profile?.name}</span>
-            <Button variant="ghost" size="icon" onClick={() => { signOut(); navigate('/login'); }}>
+            <Button variant="ghost" size="icon" onClick={() => { signOut(); navigate('/login'); }} title={t('common.logout')}>
               <LogOut className="w-5 h-5 text-muted-foreground" />
             </Button>
           </div>

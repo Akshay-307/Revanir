@@ -2,6 +2,8 @@ import { User, Phone, MapPin, ChevronRight } from 'lucide-react';
 import { Customer } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
+import { useTranslation } from 'react-i18next';
+import { useTransliteration } from '@/utils/transliterate';
 
 interface CustomerCardProps {
   customer: Customer;
@@ -12,6 +14,10 @@ interface CustomerCardProps {
 }
 
 export function CustomerCard({ customer, onClick, selected, showContainerCount, onReturnContainer }: CustomerCardProps) {
+  const { t } = useTranslation();
+  const name = useTransliteration(customer.name);
+  const address = useTransliteration(customer.address);
+
   return (
     <button
       onClick={onClick}
@@ -29,19 +35,19 @@ export function CustomerCard({ customer, onClick, selected, showContainerCount, 
             <User className="w-6 h-6 text-secondary-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate">{customer.name}</h3>
+            <h3 className="font-semibold text-foreground truncate">{name}</h3>
             <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
               <Phone className="w-4 h-4 flex-shrink-0" />
               <span>{customer.phone}</span>
             </div>
             <div className="flex items-start gap-1.5 mt-1 text-sm text-muted-foreground">
               <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">{customer.address}</span>
+              <span className="line-clamp-2">{address}</span>
             </div>
             {showContainerCount && (customer.containers_held > 0) && (
               <div className="mt-2 flex items-center justify-between">
                 <div className="inline-flex items-center px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-                  {customer.containers_held} Container{customer.containers_held !== 1 ? 's' : ''} Pending
+                  {t(customer.containers_held === 1 ? 'cards.container_pending' : 'cards.containers_pending', { count: customer.containers_held })}
                 </div>
                 {onReturnContainer && (
                   <Button
@@ -53,7 +59,7 @@ export function CustomerCard({ customer, onClick, selected, showContainerCount, 
                       onReturnContainer(e);
                     }}
                   >
-                    Return 1
+                    {t('cards.return_1')}
                   </Button>
                 )}
               </div>

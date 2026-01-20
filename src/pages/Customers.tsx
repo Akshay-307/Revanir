@@ -17,6 +17,7 @@ import {
 import { useOrders } from '@/hooks/useOrders';
 import { CustomerBillingCard } from '@/components/CustomerBillingCard';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export default function Customers() {
   const { isAdmin } = useAuth();
@@ -26,6 +27,7 @@ export default function Customers() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'local' | 'onetime'>('local');
   const [view, setView] = useState<'list' | 'billing'>('list');
+  const { t } = useTranslation();
 
   // Reset tab if not admin
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function Customers() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header title="Customers" subtitle={`${customers.length} registered`} />
+      <Header title={t('customers.title')} subtitle={`${customers.length} ${t('customers.registered')}`} />
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-4">
         {/* Toggle Tabs */}
@@ -66,7 +68,7 @@ export default function Customers() {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Local (Daily)
+            {t('customers.local_daily')}
           </button>
           {isAdmin && (
             <button
@@ -78,7 +80,7 @@ export default function Customers() {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              One-time
+              {t('customers.onetime')}
             </button>
           )}
         </div>
@@ -92,7 +94,7 @@ export default function Customers() {
               onClick={() => setView(view === 'list' ? 'billing' : 'list')}
               className="text-primary hover:text-primary/80 hover:bg-primary/10"
             >
-              {view === 'list' ? 'View Billing' : 'View All'}
+              {view === 'list' ? t('customers.view_billing') : t('customers.view_all')}
             </Button>
           </div>
         )}
@@ -103,7 +105,7 @@ export default function Customers() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder={activeTab === 'local' ? "Search daily customers..." : "Search one-time customers..."}
+              placeholder={activeTab === 'local' ? t('customers.search_daily') : t('customers.search_onetime')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12"
@@ -120,7 +122,7 @@ export default function Customers() {
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <UserPlus className="w-5 h-5 text-primary" />
-                    Add Customer
+                    {t('customers.add_customer')}
                   </DialogTitle>
                 </DialogHeader>
                 <AddCustomerForm onSuccess={() => setDialogOpen(false)} forceType={activeTab === 'local' ? 'regular' : 'onetime'} />
@@ -134,10 +136,10 @@ export default function Customers() {
           <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
             <Users className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">
-              No {activeTab === 'local' ? 'local' : 'one-time'} customers found
+              {activeTab === 'local' ? t('customers.no_local_found') : t('customers.no_onetime_found')}
             </h3>
             <p className="text-muted-foreground text-sm mb-4">
-              Add a customer to get started
+              {t('customers.add_to_start')}
             </p>
           </div>
         ) : (
