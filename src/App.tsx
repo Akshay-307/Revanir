@@ -14,6 +14,8 @@ import Register from "./pages/Register";
 import PendingApproval from "./pages/PendingApproval";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import EventOrders from './pages/EventOrders';
+import Reminders from './pages/Reminders';
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,8 @@ const AppRoutes = () => {
         <Route path="/customers" element={<Customers />} />
         <Route path="/new-order" element={<NewOrder />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/events" element={<EventOrders />} />
+        <Route path="/reminders" element={<Reminders />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

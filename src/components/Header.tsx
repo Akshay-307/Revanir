@@ -1,6 +1,6 @@
-import { Droplets, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -12,33 +12,29 @@ export function Header({ title, subtitle }: HeaderProps) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
-
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
-      <div className="flex items-center justify-between max-w-md mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl water-gradient flex items-center justify-center shadow-md">
-            <Droplets className="w-6 h-6 text-primary-foreground" />
+    <header className="px-6 py-6 flex justify-between items-center bg-background/50 backdrop-blur-lg sticky top-0 z-50">
+      <div>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/reminders')} className="relative">
+          <Bell className="w-5 h-5 text-muted-foreground" />
+        </Button>
+        {/* Removed theme toggle for now if it was causing issues, or keep if it was there */}
+        {user && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground hidden sm:inline-block">{user.profile?.name}</span>
+            <Button variant="ghost" size="icon" onClick={() => { signOut(); navigate('/login'); }}>
+              <LogOut className="w-5 h-5 text-muted-foreground" />
+            </Button>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">{title}</h1>
-            {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {user && (
-            <span className="text-sm text-muted-foreground">{user.profile.name}</span>
-          )}
-          <Button variant="ghost" size="icon" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
+        )}
       </div>
     </header>
   );

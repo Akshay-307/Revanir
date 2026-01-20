@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function NewOrder() {
-  const { customers, searchCustomers } = useCustomers();
+  const { customers, searchCustomers, updateContainerCount } = useCustomers();
   const { addOrder } = useOrders();
   const { isAdmin } = useAuth();
 
@@ -26,7 +26,10 @@ export default function NewOrder() {
 
   // New State variables
   const [productType, setProductType] = useState<'bottle' | 'jug'>('bottle');
-  const [orderType, setOrderType] = useState<'regular' | 'bulk'>('regular');
+  const [orderType, setOrderType] = useState<'regular' | 'bulk' | 'event'>('regular');
+  const [eventDate, setEventDate] = useState('');
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [useCompanyContainer, setUseCompanyContainer] = useState(false);
 
   const filteredCustomers = searchCustomers(searchQuery);
 
@@ -52,17 +55,36 @@ export default function NewOrder() {
       return;
     }
 
+    if (isScheduled && !eventDate) {
+      toast.error('Please select a date and time for the event');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // 1. Log the order
+      // Determine final order type
+      const finalOrderType = isScheduled ? 'event' : (orderType === 'regular' ? 'regular' : 'bulk');
+
       await addOrder({
         customer_id: selectedCustomer.id,
         units,
         is_paid: isPaid,
         product_type: productType,
-        order_type: orderType,
+        order_type: finalOrderType,
         price: unitPrice,
+        delivered_at: isScheduled ? new Date(eventDate).toISOString() : new Date().toISOString(),
+        billing_month: null, // calculated on backend or trigger? or just null for now
+        notes: null
       });
+
+      // 2. Update container count if needed
+      // Automatically for Special orders (Bulk or Event)
+      if (finalOrderType !== 'regular' && !selectedCustomer.is_regular) {
+        await updateContainerCount(selectedCustomer.id, 1);
+        toast.info('Container tracked');
+      }
 
       toast.success(`Order logged for ${selectedCustomer.name}!`);
 
@@ -73,6 +95,8 @@ export default function NewOrder() {
       setIsPaid(false);
       setProductType('bottle');
       setOrderType('regular');
+      setEventDate('');
+      setUseCompanyContainer(false);
     } catch (error) {
       console.error(error);
       toast.error('Failed to log order');
@@ -181,12 +205,20 @@ export default function NewOrder() {
           {/* Order Type - Admin Only */}
           {isAdmin && (
             <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Order Type
-              </h2>
-              <div className="flex bg-secondary p-1 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Order Type
+                </h2>
+                <Button variant="link" size="sm" className="h-auto p-0 text-purple-600" onClick={() => window.location.href = '/reminders'}>
+                  View Schedule
+                </Button>
+              </div>
+              <div className="flex bg-secondary p-1 rounded-xl mb-4">
                 <button
-                  onClick={() => setOrderType('regular')}
+                  onClick={() => {
+                    setOrderType('regular');
+                    setIsScheduled(false);
+                  }}
                   className={cn(
                     "flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all",
                     orderType === 'regular'
@@ -194,20 +226,53 @@ export default function NewOrder() {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Regular
+                  Regular (Monthly)
                 </button>
                 <button
                   onClick={() => setOrderType('bulk')}
                   className={cn(
                     "flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all",
-                    orderType === 'bulk'
+                    orderType === 'bulk' || orderType === 'event'
                       ? "bg-purple-100 text-purple-700 shadow"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Bulk / Event
+                  Special (One-time/Bulk)
                 </button>
               </div>
+
+              {/* Schedule Toggle for Special Orders */}
+              {(orderType === 'bulk' || orderType === 'event') && (
+                <div className="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100 space-y-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="is-scheduled" className="font-medium text-purple-900">
+                      Schedule for later?
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="is-scheduled"
+                        className="w-5 h-5 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                        checked={isScheduled}
+                        onChange={(e) => setIsScheduled(e.target.checked)}
+                      />
+                    </div>
+                  </div>
+
+                  {isScheduled && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="event-date" className="text-purple-800">Date & Time</Label>
+                      <Input
+                        id="event-date"
+                        type="datetime-local"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        className="bg-white border-purple-200 focus:border-purple-400"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           )}
         </div>
@@ -225,31 +290,20 @@ export default function NewOrder() {
           </div>
 
           <div className="flex items-center justify-center gap-4 p-6 bg-card rounded-2xl border-2 border-border">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-14 w-14 rounded-xl"
-              onClick={() => setUnits(Math.max(1, units - 1))}
-              disabled={units <= 1}
-            >
-              <Minus className="w-6 h-6" />
-            </Button>
-            <div className="text-center min-w-[100px]">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-5xl font-bold text-foreground">{units}</span>
+            <div className="flex-1">
+              <div className="flex items-center justify-center">
+                <Input
+                  type="number"
+                  min="1"
+                  value={units}
+                  onChange={(e) => setUnits(Math.max(1, parseInt(e.target.value) || 0))}
+                  className="text-center text-4xl font-bold h-20 w-32 border-2"
+                />
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {productType === 'bottle' ? (units === 1 ? 'Bottle' : 'Bottles') : (units === 1 ? 'Jug' : 'Jugs')}
+              <p className="text-xs text-center text-muted-foreground mt-2 uppercase tracking-wide">
+                {productType === 'bottle' ? 'Bottles' : 'Jugs'}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-14 w-14 rounded-xl"
-              onClick={() => setUnits(units + 1)}
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
           </div>
         </section>
 
@@ -291,6 +345,29 @@ export default function NewOrder() {
           )}
         </section>
 
+        {/* Container Return / Company Container Logic */}
+        {
+          !selectedCustomer?.is_regular && (
+            <section className="p-4 bg-card rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/50">
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  id="use-container"
+                  className="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                  checked={useCompanyContainer}
+                  onChange={(e) => setUseCompanyContainer(e.target.checked)}
+                />
+                <label htmlFor="use-container" className="font-medium text-amber-900">
+                  Uses Company Container?
+                </label>
+              </div>
+              <p className="text-xs text-amber-700 ml-7">
+                Checking this will mark a container as "Pending Return" for this customer.
+              </p>
+            </section>
+          )
+        }
+
         {/* Submit Button */}
         <Button
           variant={orderType === 'bulk' ? 'default' : 'water'} // Use default (which might be black/primary) or a specific color for bulk? Let's use 'water' for regular and maybe style bulk differently if needed, but 'water' is consistent. Actually showing different flavor.
@@ -307,7 +384,7 @@ export default function NewOrder() {
             </>
           )}
         </Button>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }

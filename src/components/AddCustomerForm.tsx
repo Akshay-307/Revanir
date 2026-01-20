@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 
 interface AddCustomerFormProps {
   onSuccess?: () => void;
+  forceType?: 'regular' | 'onetime';
 }
 
-export function AddCustomerForm({ onSuccess }: AddCustomerFormProps) {
+export function AddCustomerForm({ onSuccess, forceType }: AddCustomerFormProps) {
   const { addCustomer } = useCustomers();
   const [formData, setFormData] = useState({
     name: '',
@@ -20,21 +21,25 @@ export function AddCustomerForm({ onSuccess }: AddCustomerFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
       toast.error('Please fill in all fields');
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await addCustomer({
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
+        is_regular: forceType === 'regular' || (forceType === undefined),
+        default_units: null,
+        route_id: null,
+        containers_held: 0,
       });
-      
+
       toast.success('Customer added successfully!');
       setFormData({ name: '', phone: '', address: '' });
       onSuccess?.();

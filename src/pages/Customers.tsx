@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, UserPlus, Users } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Input } from '@/components/ui/input';
@@ -20,15 +20,29 @@ import { cn } from '@/lib/utils';
 
 export default function Customers() {
   const { isAdmin } = useAuth();
-  const { customers, searchCustomers } = useCustomers();
+  const { customers, searchCustomers, updateContainerCount } = useCustomers();
   const { orders, settleCustomerBill } = useOrders();
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'local' | 'onetime'>('local');
   const [view, setView] = useState<'list' | 'billing'>('list');
+
+  // Reset tab if not admin
+  useEffect(() => {
+    if (!isAdmin && activeTab === 'onetime') {
+      setActiveTab('local');
+    }
+  }, [isAdmin, activeTab]);
 
   const filteredCustomers = searchCustomers(searchQuery);
 
-  // Filter customers with bills for billing view
+  // Filter customers based on tab
+  const displayCustomers = filteredCustomers.filter(c => {
+    if (activeTab === 'local') return c.is_regular;
+    return !c.is_regular;
+  });
+
+  // Calculate customers with bills for badge or info (optional)
   const customersWithBills = customers.filter(customer => {
     const unpaid = orders.filter(
       o => o.customer_id === customer.id && !o.is_paid && o.order_type === 'regular'
@@ -36,39 +50,52 @@ export default function Customers() {
     return unpaid.length > 0;
   });
 
-  const displayCustomers = view === 'list' ? filteredCustomers :
-    (searchQuery ? searchCustomers(searchQuery).filter(c => customersWithBills.includes(c)) : customersWithBills);
-
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header title="Customers" subtitle={`${customers.length} registered`} />
 
       <main className="px-4 py-6 max-w-md mx-auto space-y-4">
-        {/* Toggle View */}
+        {/* Toggle Tabs */}
         <div className="flex bg-secondary p-1 rounded-xl mb-4">
           <button
-            onClick={() => setView('list')}
+            onClick={() => setActiveTab('local')}
             className={cn(
               "flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all",
-              view === 'list'
+              activeTab === 'local'
                 ? "bg-white shadow text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            All Customers
+            Local (Daily)
           </button>
-          <button
-            onClick={() => setView('billing')}
-            className={cn(
-              "flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all",
-              view === 'billing'
-                ? "bg-white shadow text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Billing ({customersWithBills.length})
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('onetime')}
+              className={cn(
+                "flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all",
+                activeTab === 'onetime'
+                  ? "bg-white shadow text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              One-time
+            </button>
+          )}
         </div>
+
+        {/* View Toggle (Only for Local) */}
+        {activeTab === 'local' && (
+          <div className="flex justify-end mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView(view === 'list' ? 'billing' : 'list')}
+              className="text-primary hover:text-primary/80 hover:bg-primary/10"
+            >
+              {view === 'list' ? 'View Billing' : 'View All'}
+            </Button>
+          </div>
+        )}
 
         {/* Search and Add */}
         <div className="flex gap-3">
@@ -76,13 +103,13 @@ export default function Customers() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search customers..."
+              placeholder={activeTab === 'local' ? "Search daily customers..." : "Search one-time customers..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12"
             />
           </div>
-          {isAdmin && view === 'list' && (
+          {isAdmin && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="water" size="icon">
@@ -93,10 +120,10 @@ export default function Customers() {
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <UserPlus className="w-5 h-5 text-primary" />
-                    Add New Customer
+                    Add Customer
                   </DialogTitle>
                 </DialogHeader>
-                <AddCustomerForm onSuccess={() => setDialogOpen(false)} />
+                <AddCustomerForm onSuccess={() => setDialogOpen(false)} forceType={activeTab === 'local' ? 'regular' : 'onetime'} />
               </DialogContent>
             </Dialog>
           )}
@@ -107,20 +134,22 @@ export default function Customers() {
           <div className="text-center py-12 px-6 bg-card rounded-2xl border-2 border-dashed border-border">
             <Users className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">
-              {view === 'billing' ? 'No pending bills' : (searchQuery ? 'No customers found' : 'No customers yet')}
+              No {activeTab === 'local' ? 'local' : 'one-time'} customers found
             </h3>
             <p className="text-muted-foreground text-sm mb-4">
-              {view === 'billing'
-                ? 'All regular customers are settled up!'
-                : (searchQuery ? 'Try a different search term' : 'Add your first customer to get started')}
+              Add a customer to get started
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {displayCustomers.map((customer, index) => (
               <div key={customer.id} style={{ animationDelay: `${index * 50}ms` }}>
-                {view === 'list' ? (
-                  <CustomerCard customer={customer} />
+                {view === 'list' || activeTab === 'onetime' ? (
+                  <CustomerCard
+                    customer={customer}
+                    showContainerCount={activeTab === 'onetime'}
+                    onReturnContainer={activeTab === 'onetime' ? () => updateContainerCount(customer.id, -1) : undefined}
+                  />
                 ) : (
                   <CustomerBillingCard
                     customer={customer}

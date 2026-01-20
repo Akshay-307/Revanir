@@ -25,7 +25,17 @@ export function useOrders() {
   });
 
   const addOrderMutation = useMutation({
-    mutationFn: async (order: Omit<Order, 'id' | 'created_at' | 'delivered_at' | 'logged_by' | 'customer'>) => {
+    mutationFn: async (order: {
+      customer_id: string;
+      units: number;
+      is_paid: boolean;
+      product_type: 'bottle' | 'jug';
+      order_type: 'regular' | 'bulk' | 'event';
+      price: number;
+      delivered_at?: string;
+      billing_month?: string | null;
+      notes?: string | null;
+    }) => {
       const { data, error } = await supabase
         .from('orders')
         .insert({

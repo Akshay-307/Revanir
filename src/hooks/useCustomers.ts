@@ -77,9 +77,9 @@ export function useCustomers() {
     if (!query.trim()) return customers;
     const lowercaseQuery = query.toLowerCase();
     return customers.filter(
-      c => c.name.toLowerCase().includes(lowercaseQuery) ||
-           c.phone.includes(query) ||
-           c.address.toLowerCase().includes(lowercaseQuery)
+      c => (c.name || '').toLowerCase().includes(lowercaseQuery) ||
+        (c.phone || '').includes(query) ||
+        (c.address || '').toLowerCase().includes(lowercaseQuery)
     );
   };
 
@@ -90,5 +90,14 @@ export function useCustomers() {
     updateCustomer: updateCustomerMutation.mutateAsync,
     deleteCustomer: deleteCustomerMutation.mutateAsync,
     searchCustomers,
+    updateContainerCount: async (customerId: string, delta: number) => {
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) return;
+      const newCount = Math.max(0, (customer.containers_held || 0) + delta);
+      await updateCustomerMutation.mutateAsync({
+        id: customerId,
+        updates: { containers_held: newCount }
+      });
+    },
   };
 }

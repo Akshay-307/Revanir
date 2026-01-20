@@ -6,6 +6,7 @@ export interface Customer {
   route_id: string | null;
   is_regular: boolean;
   default_units: number | null;
+  containers_held: number;
   created_at: string;
   updated_at: string;
 }
@@ -16,7 +17,7 @@ export interface Order {
   units: number;
   is_paid: boolean;
   product_type: 'bottle' | 'jug';
-  order_type: 'regular' | 'bulk';
+  order_type: 'regular' | 'bulk' | 'event';
   price: number;
   billing_month: string | null;
   delivered_at: string;
