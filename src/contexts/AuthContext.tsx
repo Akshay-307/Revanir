@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfileAndRole = async (userId: string) => {
+  const fetchProfileAndRole = async (userId: string, email?: string) => {
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return {
         id: userId,
-        profile,
+        profile: { ...profile, email: email || null },
         role: roleData?.role || null,
       } as AuthUser;
     } catch (error) {
@@ -76,21 +76,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Listen for auth changes
+    let mounted = true;
+
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          if (session?.user) {
+            const authUser = await fetchProfileAndRole(session.user.id, session.user.email);
+            if (mounted) setUser(authUser);
+          } else {
+            if (mounted) setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error handling initial session:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initSession();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+
       if (session?.user) {
         // Fetch profile
-        const authUser = await fetchProfileAndRole(session.user.id);
-        setUser(authUser);
+        const authUser = await fetchProfileAndRole(session.user.id, session.user.email);
+        if (mounted) setUser(authUser);
       } else {
-        setUser(null);
+        if (mounted) setUser(null);
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, pass: string) => {
