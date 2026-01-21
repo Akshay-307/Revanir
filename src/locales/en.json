@@ -97,7 +97,7 @@
         "pending": "Pending",
         "container_pending": "{{count}} Bottle/Jug Pending Return",
         "containers_pending": "{{count}} Bottles/Jugs Pending Return",
-        "return_1": "Return 1 Unit"
+        "return_1": "Return"
     },
     "reminders": {
         "title": "Reminders",
