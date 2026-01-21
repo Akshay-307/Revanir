@@ -151,6 +151,35 @@ export default function Customers() {
                     customer={customer}
                     showContainerCount={activeTab === 'onetime'}
                     onReturnContainer={activeTab === 'onetime' ? () => updateContainerCount(customer.id, -1) : undefined}
+                    lastOrderStats={(() => {
+                      if (activeTab !== 'onetime') return null;
+                      // Find latest order for this customer
+                      const customerOrders = orders
+                        .filter(o => o.customer_id === customer.id)
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+                      if (customerOrders.length === 0) return null;
+
+                      // Use the most recent order (or maybe try to aggregate if there are multiple "active" ones? 
+                      // But sticking to simple latest context is safer).
+                      // Actually, if we have a "group" of orders delivered at the same time, we might want to sum them.
+                      // Let's take the latest order's delivery time and sum all orders with that time for this customer.
+                      const latestOrder = customerOrders[0];
+                      const sameDayOrders = customerOrders.filter(o => o.delivered_at === latestOrder.delivered_at);
+
+                      const bottles = sameDayOrders.filter(o => o.product_type === 'bottle').reduce((sum, o) => sum + o.units, 0);
+                      const jugs = sameDayOrders.filter(o => o.product_type === 'jug').reduce((sum, o) => sum + o.units, 0);
+                      // Payment status: if ANY is pending, show pending? Or if ALL are paid?
+                      // Usually distinct orders have distinct payment status, but visually we want to know "Did they pay?"
+                      const isPaid = sameDayOrders.every(o => o.is_paid);
+
+                      return {
+                        bottles,
+                        jugs,
+                        isPaid,
+                        total: bottles + jugs
+                      };
+                    })()}
                   />
                 ) : (
                   <CustomerBillingCard

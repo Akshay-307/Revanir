@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/utils/dateUtils';
 import { TransliteratedText } from '@/components/TransliteratedText';
+import { cn } from '@/lib/utils';
 
 export default function Reminders() {
     const { orders } = useOrders();
@@ -98,24 +99,61 @@ export default function Reminders() {
                                 <p>{t('reminders.no_returns')}</p>
                             </div>
                         ) : (
-                            pendingReturns.map(customer => (
-                                <Card key={customer.id} className="border-l-4 border-l-amber-400">
-                                    <CardContent className="p-4 flex items-center justify-between">
-                                        <div>
-                                            <div className="font-semibold">
-                                                <TransliteratedText text={customer.name} />
+                            pendingReturns.map(customer => {
+                                // Calculate last order stats
+                                const customerOrders = orders
+                                    .filter(o => o.customer_id === customer.id)
+                                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+                                let lastOrderStats = null;
+                                if (customerOrders.length > 0) {
+                                    const latestOrder = customerOrders[0];
+                                    const sameDayOrders = customerOrders.filter(o => o.delivered_at === latestOrder.delivered_at);
+                                    const bottles = sameDayOrders.filter(o => o.product_type === 'bottle').reduce((sum, o) => sum + o.units, 0);
+                                    const jugs = sameDayOrders.filter(o => o.product_type === 'jug').reduce((sum, o) => sum + o.units, 0);
+                                    const isPaid = sameDayOrders.every(o => o.is_paid);
+                                    lastOrderStats = { bottles, jugs, isPaid };
+                                }
+
+                                return (
+                                    <Card key={customer.id} className="border-l-4 border-l-amber-400">
+                                        <CardContent className="p-4 flex items-center justify-between">
+                                            <div className="flex-1 min-w-0 mr-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="font-semibold truncate">
+                                                        <TransliteratedText text={customer.name} />
+                                                    </div>
+                                                    {lastOrderStats && (
+                                                        <span className={cn(
+                                                            "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase shrink-0 ml-2",
+                                                            lastOrderStats.isPaid ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                                        )}>
+                                                            {lastOrderStats.isPaid ? "PAID" : "PENDING"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-sm text-muted-foreground">{customer.phone}</div>
+
+                                                <div className="mt-2 text-xs">
+                                                    <div className="inline-flex items-center px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium mb-1">
+                                                        {t(customer.containers_held === 1 ? 'cards.container_pending' : 'cards.containers_pending', { count: customer.containers_held })}
+                                                    </div>
+                                                    {lastOrderStats && (
+                                                        <div className="text-muted-foreground pl-1">
+                                                            ({lastOrderStats.bottles > 0 ? `${lastOrderStats.bottles} Bottles` : ''}
+                                                            {lastOrderStats.bottles > 0 && lastOrderStats.jugs > 0 ? ', ' : ''}
+                                                            {lastOrderStats.jugs > 0 ? `${lastOrderStats.jugs} Jugs` : ''})
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">{customer.phone}</div>
-                                            <div className="mt-1 inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-                                                {t(customer.containers_held === 1 ? 'cards.container_pending' : 'cards.containers_pending', { count: customer.containers_held })}
-                                            </div>
-                                        </div>
-                                        <Button size="sm" variant="outline" onClick={() => handleReturn(customer.id, customer.containers_held)}>
-                                            {t('cards.return_1')}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ))
+                                            <Button size="sm" variant="outline" className="shrink-0" onClick={() => handleReturn(customer.id, customer.containers_held)}>
+                                                {t('cards.return_1')}
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                )
+                            })
                         )}
                     </TabsContent>
                 </Tabs>

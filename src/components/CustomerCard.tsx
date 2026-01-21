@@ -11,9 +11,15 @@ interface CustomerCardProps {
   selected?: boolean;
   showContainerCount?: boolean;
   onReturnContainer?: (e: React.MouseEvent) => void;
+  lastOrderStats?: {
+    bottles: number;
+    jugs: number;
+    isPaid: boolean;
+    total: number;
+  } | null;
 }
 
-export function CustomerCard({ customer, onClick, selected, showContainerCount, onReturnContainer }: CustomerCardProps) {
+export function CustomerCard({ customer, onClick, selected, showContainerCount, onReturnContainer, lastOrderStats }: CustomerCardProps) {
   const { t } = useTranslation();
   const name = useTransliteration(customer.name);
   const address = useTransliteration(customer.address);
@@ -45,22 +51,43 @@ export function CustomerCard({ customer, onClick, selected, showContainerCount, 
               <span className="line-clamp-2">{address}</span>
             </div>
             {showContainerCount && (customer.containers_held > 0) && (
-              <div className="mt-2 flex items-center justify-between">
-                <div className="inline-flex items-center px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-                  {t(customer.containers_held === 1 ? 'cards.container_pending' : 'cards.containers_pending', { count: customer.containers_held })}
+              <div className="mt-2 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="inline-flex items-center px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-medium">
+                    {t(customer.containers_held === 1 ? 'cards.container_pending' : 'cards.containers_pending', { count: customer.containers_held })}
+                  </div>
+                  {onReturnContainer && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs border-amber-200 hover:bg-amber-50 text-amber-900"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onReturnContainer(e);
+                      }}
+                    >
+                      {t('cards.return_1')}
+                    </Button>
+                  )}
                 </div>
-                {onReturnContainer && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs border-amber-200 hover:bg-amber-50 text-amber-900"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onReturnContainer(e);
-                    }}
-                  >
-                    {t('cards.return_1')}
-                  </Button>
+                {/* Show last order context if available to help identify what is pending */}
+                {/* Only show if we have pending containers */}
+                {lastOrderStats && (
+                  <div className="text-xs text-muted-foreground bg-secondary/50 p-2 rounded">
+                    <div className="flex justify-between items-center mb-1">
+                      <span>Latest Order:</span>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase",
+                        lastOrderStats.isPaid ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                      )}>
+                        {lastOrderStats.isPaid ? "PAID" : "PENDING"}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      {lastOrderStats.bottles > 0 && <span>{lastOrderStats.bottles} Bottles</span>}
+                      {lastOrderStats.jugs > 0 && <span>{lastOrderStats.jugs} Jugs</span>}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

@@ -95,9 +95,9 @@
         "bottles": "Bottles",
         "paid": "Paid",
         "pending": "Pending",
-        "container_pending": "{{count}} Container Pending",
-        "containers_pending": "{{count}} Containers Pending",
-        "return_1": "Return 1"
+        "container_pending": "{{count}} Bottle/Jug Pending Return",
+        "containers_pending": "{{count}} Bottles/Jugs Pending Return",
+        "return_1": "Return 1 Unit"
     },
     "reminders": {
         "title": "Reminders",
